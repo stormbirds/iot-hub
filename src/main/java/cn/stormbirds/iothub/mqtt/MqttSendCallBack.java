@@ -49,7 +49,7 @@ public class MqttSendCallBack implements MqttCallbackExtended {
             MqttMessage message = token.getMessage();
             byte[] payload = message.getPayload();
             String s = new String(payload, StandardCharsets.UTF_8);
-            log.info("发送消息回调:  消息的内容是：" + s);
+            log.debug("发送消息回调:  消息的内容是：" + s);
         } catch (MqttException e) {
             e.printStackTrace();
         }

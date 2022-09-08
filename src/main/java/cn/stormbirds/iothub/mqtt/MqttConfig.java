@@ -8,12 +8,12 @@ import javax.annotation.Resource;
 @Configuration
 public class MqttConfig {
 
-    @Resource
-    private MqttAcceptClient mqttAcceptClient;
-
-    @Bean
-    public MqttAcceptClient getMqttPushClient() {
-        mqttAcceptClient.connect();
-        return mqttAcceptClient;
-    }
+//    @Resource
+//    private MqttAcceptClient mqttAcceptClient;
+//
+//    @Bean
+//    public MqttAcceptClient getMqttPushClient() {
+//        mqttAcceptClient.connect();
+//        return mqttAcceptClient;
+//    }
 }

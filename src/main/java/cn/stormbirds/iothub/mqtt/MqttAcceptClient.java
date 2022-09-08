@@ -17,9 +17,6 @@ public class MqttAcceptClient {
     @Lazy
     private MqttAcceptCallback mqttAcceptCallback;
 
-    @Autowired
-    private MqttProperties mqttProperties;
-
     public static MqttClient client;
 
     private static MqttClient getClient() {
@@ -32,8 +29,9 @@ public class MqttAcceptClient {
 
     /**
      * 客户端连接
+     * @return
      */
-    public void connect() {
+    public boolean connect(MqttProperties mqttProperties) {
         MqttClient client;
         try {
             // clientId 使用服务器 yml里面配置的 clientId
@@ -45,17 +43,19 @@ public class MqttAcceptClient {
             options.setKeepAliveInterval(mqttProperties.getKeepAlive());
             options.setAutomaticReconnect(mqttProperties.getReconnect());
             options.setCleanSession(mqttProperties.getCleanSession());
-            MqttAcceptClient.setClient(client);
             try {
                 // 设置回调
                 client.setCallback(mqttAcceptCallback);
                 client.connect(options);
+                MqttAcceptClient.setClient(client);
+                return true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     /**

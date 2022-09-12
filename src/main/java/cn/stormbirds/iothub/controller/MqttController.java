@@ -1,6 +1,7 @@
 package cn.stormbirds.iothub.controller;
 
 import cn.hutool.core.util.IdUtil;
+import cn.stormbirds.iothub.base.ResultJson;
 import cn.stormbirds.iothub.mqtt.MqttAcceptClient;
 import cn.stormbirds.iothub.mqtt.MqttProperties;
 import com.alibaba.fastjson.JSON;
@@ -24,7 +25,7 @@ import java.util.Map;
 @Slf4j
 @Tag(name = "MQTT")
 @RestController
-@RequestMapping("/mqtt")
+@RequestMapping("/api/v1/mqtt")
 public class MqttController {
 
     @Resource
@@ -35,6 +36,12 @@ public class MqttController {
         mqttAcceptClient.connect(mqttProperties);
         int a = 10/0;
         return "ok";
+    }
+
+    @PostMapping("/subscribe")
+    public ResultJson<String> subscribe(@RequestParam String topic, @RequestParam int qos){
+        mqttAcceptClient.subscribe(topic,qos);
+        return ResultJson.ok("ok");
     }
 
     @PostMapping("/sql/{db_name}")
@@ -76,9 +83,9 @@ public class MqttController {
     }
 
     @GetMapping("/send")
-    public String sendMessage(@RequestParam String topic,@RequestParam String message) throws MqttException {
+    public ResultJson<String> sendMessage(@RequestParam String topic,@RequestParam String message) throws MqttException {
         MqttAcceptClient.client.publish(topic,message.getBytes(),0,false);
-        List<Map> result = new ArrayList<>();
+        List<Map<String,Object>> result = new ArrayList<>();
         for (int i = 0; i < 2000; i++) {
             Map<String,Object> sendMsg = new HashMap<>();
             sendMsg.put("tagnum", IdUtil.nanoId(15));
@@ -101,6 +108,6 @@ public class MqttController {
             });
             thread.start();
         }
-        return "ok";
+        return ResultJson.ok("ok");
     }
 }

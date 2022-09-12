@@ -1,14 +1,14 @@
 package cn.stormbirds.iothub.mqtt;
 
+import cn.stormbirds.iothub.entity.MqttConfig;
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
-@Component
-@ConfigurationProperties("mqtt")
+import javax.validation.constraints.NotBlank;
+
 @Data
 public class MqttProperties {
 
+    private String name;
     /**
      * 用户名
      */
@@ -22,17 +22,29 @@ public class MqttProperties {
     /**
      * 连接地址
      */
-    private String hostUrl;
-
+    @NotBlank(message = "连接地址不能为空")
+    private String host;
+    @NotBlank(message = "连接地址端口不能为空")
+    private Integer port;
+    @NotBlank(message = "连接协议不能为空")
+    private String protocol;
     /**
      * 客户端Id，同一台服务器下，不允许出现重复的客户端id
      */
     private String clientId;
 
     /**
-     * 默认连接主题
+     * 遗嘱主题
      */
-    private String topic;
+    private String willTopic;
+
+    private Integer willQos;
+
+    private Boolean willRetain;
+
+    private String willMessage;
+
+    private Integer willDelay;
 
     /**
      * 超时时间
@@ -60,4 +72,30 @@ public class MqttProperties {
      * 连接方式
      */
     private Integer qos;
+
+    private String version;
+
+    private Integer sessionTimeout;
+
+    public MqttProperties(MqttConfig mqttConfig) {
+        this.name = mqttConfig.getName();
+        this.username = mqttConfig.getUsername();
+        this.password = mqttConfig.getPassword();
+        this.host = mqttConfig.getHost();
+        this.port = mqttConfig.getPort();
+        this.protocol = mqttConfig.getProtocol();
+        this.clientId = mqttConfig.getClientId();
+        this.willTopic = mqttConfig.getWillTopic();
+        this.willDelay = mqttConfig.getWillDelay();
+        this.willMessage = mqttConfig.getWillMessage();
+        this.willQos = mqttConfig.getWillQos();
+        this.willRetain = mqttConfig.getWillRetain();
+        this.timeout = mqttConfig.getTimeout();
+        this.keepAlive = mqttConfig.getKeepalive();
+        this.cleanSession = mqttConfig.getCleanSession();
+        this.reconnect = mqttConfig.getReconnect();
+        this.qos = mqttConfig.getQos();
+        this.version = mqttConfig.getVersion();
+        this.sessionTimeout = mqttConfig.getSessionTimeout();
+    }
 }

@@ -8,7 +8,7 @@ import cn.stormbirds.iothub.base.ResultJson;
  * @ Email xbaojun@gmail.com
  * @ Date 2022/9/8 23:09
  */
-public class BizException extends Exception{
+public class BizException extends RuntimeException{
     private static final long serialVersionUID = 8344304071610594677L;
     private ResultJson resultJson;
 

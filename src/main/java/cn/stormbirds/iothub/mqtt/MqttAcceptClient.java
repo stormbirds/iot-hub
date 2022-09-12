@@ -5,16 +5,18 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
+
+import javax.annotation.Resource;
 
 @Component
 @Slf4j
 public class MqttAcceptClient {
 
-    @Autowired
     @Lazy
+    @Resource
     private MqttAcceptCallback mqttAcceptCallback;
 
     public static MqttClient client;
@@ -29,13 +31,13 @@ public class MqttAcceptClient {
 
     /**
      * 客户端连接
-     * @return
+     * @return 返回连接是否成功
      */
     public boolean connect(MqttProperties mqttProperties) {
         MqttClient client;
         try {
-            // clientId 使用服务器 yml里面配置的 clientId
-            client = new MqttClient(mqttProperties.getHostUrl(), mqttProperties.getClientId(), new MemoryPersistence());
+            String hostUrl = String.format(MqttConstant.URL_FORMAT,mqttProperties.getProtocol(),mqttProperties.getHost(),mqttProperties.getPort());
+            client = new MqttClient(hostUrl, mqttProperties.getClientId(), new MemoryPersistence());
             MqttConnectOptions options = new MqttConnectOptions();
             options.setUserName(mqttProperties.getUsername());
             options.setPassword(mqttProperties.getPassword().toCharArray());
@@ -43,6 +45,18 @@ public class MqttAcceptClient {
             options.setKeepAliveInterval(mqttProperties.getKeepAlive());
             options.setAutomaticReconnect(mqttProperties.getReconnect());
             options.setCleanSession(mqttProperties.getCleanSession());
+            switch (mqttProperties.getVersion()){
+                case "3.1":
+                    options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
+                    break;
+                case "3.1.1":
+                    options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1_1);
+                    break;
+                default:
+                    options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_DEFAULT);
+            }
+            if(!ObjectUtils.isEmpty(mqttProperties.getWillTopic()) )
+                options.setWill(mqttProperties.getWillTopic(),mqttProperties.getWillMessage().getBytes(),mqttProperties.getWillQos(),mqttProperties.getWillRetain());
             try {
                 // 设置回调
                 client.setCallback(mqttAcceptCallback);
@@ -63,7 +77,7 @@ public class MqttAcceptClient {
      */
     public void reconnection() {
         try {
-            client.connect();
+            client.reconnect();
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -87,7 +101,7 @@ public class MqttAcceptClient {
     /**
      * 取消订阅某个主题
      *
-     * @param topic
+     * @param topic 主题
      */
     public void unsubscribe(String topic) {
         log.info("==============开始取消订阅主题==============" + topic);

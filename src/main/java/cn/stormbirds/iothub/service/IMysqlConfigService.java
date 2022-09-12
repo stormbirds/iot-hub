@@ -17,9 +17,9 @@ public interface IMysqlConfigService extends IService<MysqlConfig> {
 
     boolean edit(MysqlConfig mysqlConfig);
 
-    boolean start(Integer id);
+    boolean start(Long id);
 
-    boolean stop(Integer id);
+    boolean stop(Long id);
 
     ResultJson testConnection(MysqlConfig mysqlConfig) throws BizException;
 

@@ -2,7 +2,9 @@ package cn.stormbirds.iothub.driver;
 
 import cn.stormbirds.iothub.base.ResultCode;
 import cn.stormbirds.iothub.base.ResultJson;
+import cn.stormbirds.iothub.driver.mysql.MysqlDataSourceCallback;
 import cn.stormbirds.iothub.exception.BizException;
+import cn.stormbirds.iothub.service.impl.MysqlConfigServiceImpl;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
@@ -36,6 +38,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class DruidPoolUtils {
     private final Map<String, DruidDataSource> druidPools = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private MysqlDataSourceCallback mysqlDataSourceCallback;
 
     @Value("${spring.datasource.druid.filters:stat,slf4j,config}")
     private String druidFilters;
@@ -74,7 +77,7 @@ public class DruidPoolUtils {
 
         DruidPooledConnection connection = null;
         lock.readLock().lock();
-        if (druidPools.get(url + username + password) == null) {
+        if (druidPools.get(url + username) == null) {
             lock.readLock().unlock();
 
             Properties dbProperties = new Properties();
@@ -102,7 +105,7 @@ public class DruidPoolUtils {
             DruidDataSource druidDataSource;
             lock.writeLock().lock();
             try {
-                if (druidPools.get(url + username + password) == null) {
+                if (druidPools.get(url + username) == null) {
                     druidDataSource = (DruidDataSource) DruidDataSourceFactory.createDataSource(dbProperties);
                     druidDataSource.setConnectionErrorRetryAttempts(3);
                     druidDataSource.setBreakAfterAcquireFailure(false);
@@ -112,9 +115,10 @@ public class DruidPoolUtils {
                     druidDataSource.setRemoveAbandoned(true);
                     //回收超时连接超时时间(以秒数为单位)
                     druidDataSource.setRemoveAbandonedTimeout(30);
-                    druidPools.put(url + username + password, druidDataSource);
+                    druidPools.put(url + username, druidDataSource);
                 }
             } catch (Exception e) {
+                this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,false);
                 throw new RuntimeException(e);
             } finally {
                 lock.writeLock().unlock();
@@ -126,9 +130,11 @@ public class DruidPoolUtils {
 
         lock.readLock().lock();
         try {
-            connection = druidPools.get(url + username + password).getConnection();
-            log.debug("当前{}连接数 {}",url, druidPools.get(url + username + password).getActiveCount());
+            connection = druidPools.get(url + username).getConnection();
+            this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,true);
+            log.debug("当前{}连接数 {}",url, druidPools.get(url + username).getActiveCount());
         } catch (SQLException throwables) {
+            this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,false);
             throw new RuntimeException(throwables);
         } finally {
             lock.readLock().unlock();
@@ -136,6 +142,16 @@ public class DruidPoolUtils {
 
         return connection;
 
+    }
+
+    public boolean removeConnection(String dbType, String host, Integer port, String dbName, String username){
+        String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),dbName,null,null,null);
+        DruidDataSource dataSource = druidPools.get(url + username);
+        if(dataSource!=null){
+            druidPools.remove(url + username).close();
+            this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,false);
+        }
+        return true;
     }
 
     public boolean testConnection(String dbType, String host, Integer port, String dbName, String username, String password) {
@@ -323,5 +339,9 @@ public class DruidPoolUtils {
         } finally {
 
         }
+    }
+
+    public void setMysqlCallback(MysqlDataSourceCallback mysqlDataSourceCallback) {
+        this.mysqlDataSourceCallback = mysqlDataSourceCallback;
     }
 }

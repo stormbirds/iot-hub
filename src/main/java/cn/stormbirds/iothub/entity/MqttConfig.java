@@ -107,4 +107,7 @@ public class MqttConfig implements Serializable {
     private Integer willDelay;
     @TableField("qos")
     private Integer qos;
+
+    @TableField("online_message")
+    private String onlineMessage;
 }

@@ -5,35 +5,39 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
-
-@Component
 @Slf4j
 public class MqttAcceptClient {
 
-    @Lazy
-    @Resource
+    private MqttProperties mqttProperties;
+
     private MqttAcceptCallback mqttAcceptCallback;
 
-    public static MqttClient client;
+    private MqttClient client;
 
-    private static MqttClient getClient() {
+    public MqttClient getClient() {
         return client;
     }
 
-    private static void setClient(MqttClient client) {
-        MqttAcceptClient.client = client;
+    private void setProperties(MqttProperties mqttProperties){
+        this.mqttProperties = mqttProperties;
     }
+    private void setClient(MqttClient client) {
+        this.client = client;
+    }
+
+    private void setAcceptCallback(MqttAcceptCallback mqttAcceptCallback){
+        this.mqttAcceptCallback = mqttAcceptCallback;
+    }
+
 
     /**
      * 客户端连接
      * @return 返回连接是否成功
      */
-    public boolean connect(MqttProperties mqttProperties) {
+    public boolean connect(MqttProperties mqttProperties, MqttAcceptCallback mqttAcceptCallback/*,MqttSendCallBack mqttSendCallBack*/) {
+        this.mqttProperties = null;
         MqttClient client;
         try {
             String hostUrl = String.format(MqttConstant.URL_FORMAT,mqttProperties.getProtocol(),mqttProperties.getHost(),mqttProperties.getPort());
@@ -56,18 +60,35 @@ public class MqttAcceptClient {
                     options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_DEFAULT);
             }
             if(!ObjectUtils.isEmpty(mqttProperties.getWillTopic()) )
-                options.setWill(mqttProperties.getWillTopic(),mqttProperties.getWillMessage().getBytes(),mqttProperties.getWillQos(),mqttProperties.getWillRetain());
+                options.setWill(mqttProperties.getWillTopic(),
+                        mqttProperties.getWillMessage().getBytes(),
+                        mqttProperties.getWillQos(),
+                        mqttProperties.getWillRetain());
             try {
                 // 设置回调
                 client.setCallback(mqttAcceptCallback);
                 client.connect(options);
-                MqttAcceptClient.setClient(client);
+                setClient(client);
+                setAcceptCallback(mqttAcceptCallback);
+                setProperties(mqttProperties);
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean closeConnection(){
+        if(this.client!=null && this.client.isConnected()){
+            try {
+                this.client.close();
+                return true;
+            } catch (MqttException e) {
+                log.error("关闭mqtt出错",e);
+            }
         }
         return false;
     }
@@ -79,7 +100,7 @@ public class MqttAcceptClient {
         try {
             client.reconnect();
         } catch (MqttException e) {
-            e.printStackTrace();
+            log.error("mqtt重连出错",e);
         }
     }
 
@@ -94,7 +115,7 @@ public class MqttAcceptClient {
         try {
             client.subscribe(topic, qos);
         } catch (MqttException e) {
-            e.printStackTrace();
+            log.error("mqtt订阅主题出错",e);
         }
     }
 

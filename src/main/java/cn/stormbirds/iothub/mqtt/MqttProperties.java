@@ -2,9 +2,12 @@ package cn.stormbirds.iothub.mqtt;
 
 import cn.stormbirds.iothub.entity.MqttConfig;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
+@NoArgsConstructor
 @Data
 public class MqttProperties {
 
@@ -24,7 +27,7 @@ public class MqttProperties {
      */
     @NotBlank(message = "连接地址不能为空")
     private String host;
-    @NotBlank(message = "连接地址端口不能为空")
+    @NotNull(message = "连接地址端口不能为空")
     private Integer port;
     @NotBlank(message = "连接协议不能为空")
     private String protocol;

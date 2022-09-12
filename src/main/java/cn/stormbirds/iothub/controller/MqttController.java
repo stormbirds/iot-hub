@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.stormbirds.iothub.base.ResultJson;
 import cn.stormbirds.iothub.mqtt.MqttAcceptClient;
 import cn.stormbirds.iothub.mqtt.MqttProperties;
+import cn.stormbirds.iothub.service.IMqttConfigService;
 import com.alibaba.fastjson.JSON;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -29,21 +30,7 @@ import java.util.Map;
 public class MqttController {
 
     @Resource
-    private MqttAcceptClient mqttAcceptClient;
-
-    @PostMapping("/setMqtt")
-    public String setMqtt(@RequestBody MqttProperties mqttProperties) {
-        mqttAcceptClient.connect(mqttProperties);
-        int a = 10/0;
-        return "ok";
-    }
-
-    @PostMapping("/subscribe")
-    public ResultJson<String> subscribe(@RequestParam String topic, @RequestParam int qos){
-        mqttAcceptClient.subscribe(topic,qos);
-        return ResultJson.ok("ok");
-    }
-
+    private IMqttConfigService mqttConfigService;
     @PostMapping("/sql/{db_name}")
     public String sql(@PathVariable String db_name, @RequestBody String sql){
         log.info("接收到SQL语句 目的数据库 {} SQL语句：{}",db_name,sql);
@@ -82,32 +69,37 @@ public class MqttController {
                 "}";
     }
 
-    @GetMapping("/send")
-    public ResultJson<String> sendMessage(@RequestParam String topic,@RequestParam String message) throws MqttException {
-        MqttAcceptClient.client.publish(topic,message.getBytes(),0,false);
-        List<Map<String,Object>> result = new ArrayList<>();
-        for (int i = 0; i < 2000; i++) {
-            Map<String,Object> sendMsg = new HashMap<>();
-            sendMsg.put("tagnum", IdUtil.nanoId(15));
-            sendMsg.put("v",System.currentTimeMillis());
-            result.add(sendMsg);
-        }
-        for (int i = 0; i < 20; i++) {
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        while (true){
-                            MqttAcceptClient.client.publish("iot", JSON.toJSONString(result).getBytes(),0,false);
-                            Thread.sleep(2000);
-                        }
-                    } catch (MqttException | InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            thread.start();
-        }
-        return ResultJson.ok("ok");
+    @GetMapping("/sendMessage/{id}")
+    public ResultJson sendMessage(@PathVariable Long id,@RequestParam String topic,@RequestParam Integer qos,@RequestParam String message){
+        return mqttConfigService.sendMessage(id,topic,qos,message);
     }
+
+//    @GetMapping("/send")
+//    public ResultJson<String> sendMessage(@RequestParam String topic,@RequestParam String message) throws MqttException {
+//        MqttAcceptClient.client.publish(topic,message.getBytes(),0,false);
+//        List<Map<String,Object>> result = new ArrayList<>();
+//        for (int i = 0; i < 2000; i++) {
+//            Map<String,Object> sendMsg = new HashMap<>();
+//            sendMsg.put("tagnum", IdUtil.nanoId(15));
+//            sendMsg.put("v",System.currentTimeMillis());
+//            result.add(sendMsg);
+//        }
+//        for (int i = 0; i < 20; i++) {
+//            Thread thread = new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    try {
+//                        while (true){
+//                            MqttAcceptClient.client.publish("iot", JSON.toJSONString(result).getBytes(),0,false);
+//                            Thread.sleep(2000);
+//                        }
+//                    } catch (MqttException | InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            });
+//            thread.start();
+//        }
+//        return ResultJson.ok("ok");
+//    }
 }

@@ -1,5 +1,6 @@
 package cn.stormbirds.iothub.mqtt;
 
+import cn.stormbirds.iothub.service.IMqttConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
@@ -9,9 +10,18 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 
-@Component
 @Slf4j
 public class MqttSendCallBack implements MqttCallbackExtended {
+
+    private Long mqttId;
+    private MqttAcceptClient mqttAcceptClient;
+    private IMqttConfigService mqttConfigService;
+
+    public MqttSendCallBack(Long mqttId, MqttAcceptClient mqttAcceptClient, IMqttConfigService mqttConfigService) {
+        this.mqttId = mqttId;
+        this.mqttAcceptClient = mqttAcceptClient;
+        this.mqttConfigService = mqttConfigService;
+    }
 
     /**
      * 客户端断开后触发
@@ -64,6 +74,6 @@ public class MqttSendCallBack implements MqttCallbackExtended {
     @Override
     public void connectComplete(boolean b, String s) {
         log.info("--------------------ClientId:"
-                + MqttAcceptClient.client.getClientId() + "客户端连接成功！--------------------");
+                + this.mqttAcceptClient.getClient().getClientId() + "客户端连接成功！--------------------");
     }
 }

@@ -34,7 +34,7 @@ public class DeviceController {
     }
 
     @PostMapping("/delete/{id}")
-    public ResultJson delete(@PathVariable Integer id){
+    public ResultJson delete(@PathVariable Long id){
         return ResultJson.ok(deviceService.removeById(id));
     }
 

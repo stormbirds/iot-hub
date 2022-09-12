@@ -1,5 +1,6 @@
 package cn.stormbirds.iothub.mqtt;
 
+import cn.stormbirds.iothub.entity.MqttConfig;
 import cn.stormbirds.iothub.service.IMqttConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -11,14 +12,18 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 
-@Component
 @Slf4j
 public class MqttAcceptCallback implements MqttCallbackExtended {
 
-    @Resource
+    private Long mqttId;
     private MqttAcceptClient mqttAcceptClient;
-    @Resource
     private IMqttConfigService mqttConfigService;
+
+    public MqttAcceptCallback(MqttAcceptClient mqttAcceptClient, IMqttConfigService mqttConfigService, long id) {
+        this.mqttAcceptClient = mqttAcceptClient;
+        this.mqttConfigService = mqttConfigService;
+        this.mqttId = id;
+    }
 
     /**
      * 客户端断开后触发
@@ -28,8 +33,8 @@ public class MqttAcceptCallback implements MqttCallbackExtended {
     @Override
     public void connectionLost(Throwable throwable) {
         log.info("接收消息回调:  连接断开，开始重连");
-        mqttConfigService.offline();
-        if (MqttAcceptClient.client == null || !MqttAcceptClient.client.isConnected()) {
+        mqttConfigService.offline(this.mqttId);
+        if (mqttAcceptClient.getClient() == null || !mqttAcceptClient.getClient().isConnected()) {
             log.info("接收消息回调:  emqx重新连接....................................................");
             mqttAcceptClient.reconnection();
         }
@@ -76,9 +81,21 @@ public class MqttAcceptCallback implements MqttCallbackExtended {
      */
     @Override
     public void connectComplete(boolean b, String s) {
-        mqttConfigService.online();
+        MqttConfig mqttConfig = mqttConfigService.getById(mqttId);
+        if(mqttConfig.getWillRetain()){
+            try {
+                mqttAcceptClient.getClient()
+                        .publish(mqttConfig.getWillTopic(),
+                                mqttConfig.getOnlineMessage().getBytes(StandardCharsets.UTF_8),
+                                mqttConfig.getWillQos(),
+                                mqttConfig.getWillRetain());
+            } catch (MqttException e) {
+                log.error("发布上线消息出错",e);
+            }
+        }
+        mqttConfigService.online(this.mqttId);
         log.info("--------------------客户端ClientId:{} 与服务端 {} {} ！--------------------"
-                , MqttAcceptClient.client.getClientId(), s ,b?"系统自动重新连接成功": "连接成功");
+                , mqttAcceptClient.getClient().getClientId(), s ,b?"系统自动重新连接成功": "连接成功");
         // 以/#结尾表示订阅所有子集的主题
         // 订阅所有客户端上下线主题
         mqttAcceptClient.subscribe("$SYS/brokers/+/clients/#", 0);

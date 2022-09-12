@@ -18,6 +18,9 @@ public enum ResultCode {
     SCRIPT_ERROR(21031, "SQL语句错误，请重新检查！"),
     SQL_ERROR(21032, "SQL查询出错，未知原因！"),
     SQL_CONNECTION_ERROR(21033, "SQL连接信息出错，请检查连接信息！"),
+
+    MQTT_SENDMESSAGE_ERROR(31000,"MQTT发送消息出错"),
+    MQTT_STOP_ERROR(31001,"MQTT服务停止失败"),
     ;
     private int code;
     private String msg;

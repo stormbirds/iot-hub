@@ -30,7 +30,8 @@ public class MybatisPlusAutomaticGenerator {
                 })
                 .strategyConfig(builder -> {
                     builder
-                            .likeTable(new LikeTable("t_")) // 设置需要生成的表名
+//                            .likeTable(new LikeTable("t_")) // 设置需要生成的表名
+                            .addInclude("t_iot_item")
                             .addTablePrefix("t_", "c_")// 设置过滤表前缀
                             .controllerBuilder()
                             .enableRestStyle().enableHyphenStyle()

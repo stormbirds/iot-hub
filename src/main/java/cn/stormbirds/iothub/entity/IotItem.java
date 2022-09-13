@@ -32,10 +32,10 @@ public class IotItem implements Serializable {
     private Long id;
 
     @TableField("gateway_id")
-    private Integer gatewayId;
+    private Long gatewayId;
 
     @TableField("device_id")
-    private Integer deviceId;
+    private Long deviceId;
 
     @TableField("scan_rate")
     private Integer scanRate;

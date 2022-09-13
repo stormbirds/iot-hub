@@ -1,9 +1,10 @@
 package cn.stormbirds.iothub.controller;
 
 import cn.stormbirds.iothub.base.ResultJson;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import cn.stormbirds.iothub.service.IIotgatewayService;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * @ Description cn.stormbirds.iothub.controller
@@ -15,8 +16,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController("")
 public class IotGatewayController {
 
+    @Resource
+    private IIotgatewayService iotgatewayService;
+
+
+
     @GetMapping("/list")
     public ResultJson list(){
-        return ResultJson.ok();
+        return ResultJson.ok(iotgatewayService.list());
+    }
+
+    @PostMapping("/delete/{id}")
+    public ResultJson delete(@PathVariable Long id){
+        return ResultJson.ok(iotgatewayService.removeById(id));
+    }
+
+    @PostMapping("/toggleSwitch/{id}")
+    public ResultJson toggleSwitch(@PathVariable Long id){
+        return ResultJson.ok(iotgatewayService.toggleSwitch(id));
     }
 }

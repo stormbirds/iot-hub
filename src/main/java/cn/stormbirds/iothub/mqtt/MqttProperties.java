@@ -80,6 +80,8 @@ public class MqttProperties {
 
     private Integer sessionTimeout;
 
+    private String defaultTopic;
+
     public MqttProperties(MqttConfig mqttConfig) {
         this.name = mqttConfig.getName();
         this.username = mqttConfig.getUsername();
@@ -100,5 +102,6 @@ public class MqttProperties {
         this.qos = mqttConfig.getQos();
         this.version = mqttConfig.getVersion();
         this.sessionTimeout = mqttConfig.getSessionTimeout();
+        this.defaultTopic = mqttConfig.getDefaultTopic();
     }
 }

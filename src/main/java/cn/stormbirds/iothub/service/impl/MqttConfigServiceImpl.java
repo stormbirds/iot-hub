@@ -84,12 +84,12 @@ public class MqttConfigServiceImpl extends ServiceImpl<MqttConfigMapper, MqttCon
     }
 
     @Override
-    public ResultJson start(Long id) throws MqttException {
+    public boolean start(Long id) {
         MqttConfig mqttConfig = getById(id);
         mqttConfig.setUpdateAt(LocalDateTimeUtil.format(LocalDateTime.now(), DatePattern.NORM_DATETIME_FORMATTER));
         mqttConfig.setEnable(true);
         updateById(mqttConfig);
-        return mqttManager.startMqtt(id)?ResultJson.ok():ResultJson.failure(ResultCode.SERVER_ERROR);
+        return mqttManager.startMqtt(id);
     }
 
     @Override
@@ -109,12 +109,17 @@ public class MqttConfigServiceImpl extends ServiceImpl<MqttConfigMapper, MqttCon
     }
 
     @Override
-    public ResultJson stop(Long id) throws MqttException {
+    public boolean stop(Long id) {
         MqttConfig mqttConfig = getById(id);
         mqttConfig.setUpdateAt(LocalDateTimeUtil.format(LocalDateTime.now(), DatePattern.NORM_DATETIME_FORMATTER));
         mqttConfig.setEnable(false);
         updateById(mqttConfig);
-        return ResultJson.ok(mqttManager.stopMqtt(id));
+        return mqttManager.stopMqtt(id);
+    }
+
+    @Override
+    public boolean justStopService(Long id) {
+        return mqttManager.stopMqtt(id);
     }
 
     @Override

@@ -36,4 +36,10 @@ public class Iotgateway implements Serializable {
 
     @TableField("agent_id")
     private Long agentId;
+
+    @TableField("enable")
+    private Boolean enable;
+
+    @TableField("name")
+    private String name;
 }

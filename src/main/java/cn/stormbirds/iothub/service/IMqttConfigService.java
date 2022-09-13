@@ -19,13 +19,15 @@ public interface IMqttConfigService extends IService<MqttConfig> {
     boolean testMqttChannel(MqttProperties mqttProperties);
     boolean save(MqttProperties mqttProperties);
 
-    ResultJson start(Long id) throws MqttException;
+    boolean start(Long id);
 
     void offline(Long mqttId);
 
     void online(Long mqttId);
 
-    ResultJson stop(Long id) throws MqttException;
+    boolean stop(Long id);
+
+    boolean justStopService(Long id);
 
     ResultJson sendMessage(Long id, String topic, Integer qos, String message);
 }

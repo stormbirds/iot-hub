@@ -1,12 +1,10 @@
 package cn.stormbirds.iothub.controller;
 
 import cn.stormbirds.iothub.base.ResultJson;
-import cn.stormbirds.iothub.entity.Device;
 import cn.stormbirds.iothub.entity.IotItem;
 import cn.stormbirds.iothub.service.IIotItemService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;

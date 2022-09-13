@@ -110,4 +110,7 @@ public class MqttConfig implements Serializable {
 
     @TableField("online_message")
     private String onlineMessage;
+
+    @TableField("default_topic")
+    private String defaultTopic;
 }

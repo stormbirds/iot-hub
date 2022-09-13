@@ -12,5 +12,4 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @since 2022-09-13
  */
 public interface IotgatewayMapper extends BaseMapper<Iotgateway> {
-
 }

@@ -8,6 +8,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
@@ -99,5 +100,8 @@ public class MqttAcceptCallback implements MqttCallbackExtended {
         // 以/#结尾表示订阅所有子集的主题
         // 订阅所有客户端上下线主题
         mqttAcceptClient.subscribe("$SYS/brokers/+/clients/#", 0);
+        if(!ObjectUtils.isEmpty(mqttConfig.getDefaultTopic())){
+            mqttAcceptClient.subscribe(mqttConfig.getDefaultTopic(),mqttConfig.getQos());
+        }
     }
 }

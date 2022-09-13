@@ -43,12 +43,7 @@ public class MqttConfigController {
     @PostMapping("/delete/{id}")
     public ResultJson delete(@PathVariable Long id){
         if(MqttConstant.ONLINE.equalsIgnoreCase(mqttConfigService.getById(id).getStatus()) ){
-            try {
-                mqttConfigService.stop(id);
-            } catch (MqttException e) {
-                e.printStackTrace();
-                return ResultJson.failure(ResultCode.MQTT_STOP_ERROR,e.getMessage());
-            }
+            mqttConfigService.stop(id);
         }
         return ResultJson.ok( mqttConfigService.removeById(id));
     }
@@ -59,13 +54,13 @@ public class MqttConfigController {
     }
 
     @GetMapping("/start/{id}")
-    public ResultJson enableMqtt(@PathVariable Long id) throws MqttException {
-        return mqttConfigService.start(id);
+    public ResultJson enableMqtt(@PathVariable Long id) {
+        return ResultJson.ok(mqttConfigService.start(id));
     }
 
     @GetMapping("/stop/{id}")
-    public ResultJson disableMqtt(@PathVariable Long id) throws MqttException {
-        return mqttConfigService.stop(id);
+    public ResultJson disableMqtt(@PathVariable Long id) {
+        return ResultJson.ok(mqttConfigService.stop(id));
     }
 
     @GetMapping("/list")
@@ -87,6 +82,7 @@ public class MqttConfigController {
         queryWrapper.eq(!ObjectUtils.isEmpty(mqttConfig.getWillQos()),"will_qos",mqttConfig.getWillQos());
         queryWrapper.eq(!ObjectUtils.isEmpty(mqttConfig.getWillRetain()),"will_retain",mqttConfig.getWillRetain());
         queryWrapper.eq(!ObjectUtils.isEmpty(mqttConfig.getQos()),"qos",mqttConfig.getQos());
+        queryWrapper.like(!ObjectUtils.isEmpty(mqttConfig.getDefaultTopic()),"default_topic",mqttConfig.getDefaultTopic());
         return ResultJson.ok(mqttConfigService.list(queryWrapper));
     }
 }

@@ -30,7 +30,7 @@ public class ResultJson<T> implements Serializable {
     }
 
     public static ResultJson failure(ResultCode code) {
-        return failure(code, "");
+        return failure(code, code.getMsg());
     }
 
     public static ResultJson failure(ResultCode code, Object o) {

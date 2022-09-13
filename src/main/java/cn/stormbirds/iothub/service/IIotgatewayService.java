@@ -12,5 +12,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2022-09-13
  */
 public interface IIotgatewayService extends IService<Iotgateway> {
+    boolean toggleSwitch(Long id);
 
+    void startByAgentId(Long gatewayId);
 }

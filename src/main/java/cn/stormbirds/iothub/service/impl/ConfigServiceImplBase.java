@@ -6,7 +6,7 @@ import cn.stormbirds.iothub.base.ResultCode;
 import cn.stormbirds.iothub.base.ResultJson;
 import cn.stormbirds.iothub.driver.DataBaseTypeEnum;
 import cn.stormbirds.iothub.driver.DruidPoolUtils;
-import cn.stormbirds.iothub.driver.mysql.MysqlDataSourceCallback;
+import cn.stormbirds.iothub.driver.mysql.DataBaseSourceCallback;
 import cn.stormbirds.iothub.entity.MysqlConfig;
 import cn.stormbirds.iothub.exception.BizException;
 import cn.stormbirds.iothub.mapper.MysqlConfigMapper;
@@ -20,6 +20,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -31,14 +33,14 @@ import java.util.stream.Collectors;
  * @since 2022-09-11
  */
 @Service
-public class MysqlConfigServiceImpl extends ServiceImpl<MysqlConfigMapper, MysqlConfig> implements IMysqlConfigService , MysqlDataSourceCallback {
+public class ConfigServiceImplBase extends ServiceImpl<MysqlConfigMapper, MysqlConfig> implements IMysqlConfigService , DataBaseSourceCallback {
 
     @Resource
     private DruidPoolUtils druidPoolUtils;
 
     @PostConstruct
     public void init(){
-        druidPoolUtils.setMysqlCallback(this);
+        druidPoolUtils.setDataBaseCallback(this);
     }
 
     @Override
@@ -51,7 +53,9 @@ public class MysqlConfigServiceImpl extends ServiceImpl<MysqlConfigMapper, Mysql
     public boolean start(Long id) {
 
         MysqlConfig mysqlConfig = getById(id);
-        if(mysqlConfig.getEnable()) return true;
+        if(mysqlConfig.getEnable()) {
+            return true;
+        }
         mysqlConfig.setEnable(true);
         try {
             druidPoolUtils.getConnection(DataBaseTypeEnum.MySQL.getCode(),
@@ -65,7 +69,9 @@ public class MysqlConfigServiceImpl extends ServiceImpl<MysqlConfigMapper, Mysql
     @Override
     public boolean stop(Long id) {
         MysqlConfig mysqlConfig = getById(id);
-        if(!mysqlConfig.getEnable()) return true;
+        if(!mysqlConfig.getEnable()) {
+            return true;
+        }
         mysqlConfig.setEnable(false);
         return updateById(mysqlConfig) && druidPoolUtils.removeConnection(DataBaseTypeEnum.MySQL.getCode(),
                 mysqlConfig.getHost(),mysqlConfig.getPort(),mysqlConfig.getScheme(),mysqlConfig.getUsername());
@@ -109,5 +115,9 @@ public class MysqlConfigServiceImpl extends ServiceImpl<MysqlConfigMapper, Mysql
         ).stream().peek(mysqlConfig -> mysqlConfig.setStatus(isConnected?MqttConstant.ONLINE:MqttConstant.OFFLINE)).collect(Collectors.toList()));
     }
 
+    @Override
+    public void listByDriver(Integer id, List<Map<String, Object>> result) {
+
+    }
 
 }

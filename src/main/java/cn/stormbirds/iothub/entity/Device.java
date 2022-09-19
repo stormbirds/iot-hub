@@ -1,5 +1,6 @@
 package cn.stormbirds.iothub.entity;
 
+import cn.stormbirds.iothub.driver.DriverModelEnum;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -35,7 +36,7 @@ public class Device implements Serializable {
     private String deviceName;
 
     @TableField("model")
-    private String model;
+    private DriverModelEnum model;
 
     @TableField("desc")
     private String desc;

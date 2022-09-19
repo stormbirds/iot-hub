@@ -27,8 +27,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("t_mysql_config")
-@Schema(name = "MysqlConfig对象", description = "")
+@TableName("t_database_config")
+@Schema(name = "ODBC数据库Config对象", description = "")
 public class MysqlConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;

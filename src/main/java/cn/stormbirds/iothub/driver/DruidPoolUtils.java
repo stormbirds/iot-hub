@@ -2,10 +2,8 @@ package cn.stormbirds.iothub.driver;
 
 import cn.stormbirds.iothub.base.ResultCode;
 import cn.stormbirds.iothub.base.ResultJson;
-import cn.stormbirds.iothub.driver.mysql.MysqlDataSourceCallback;
+import cn.stormbirds.iothub.driver.mysql.DataBaseSourceCallback;
 import cn.stormbirds.iothub.exception.BizException;
-import cn.stormbirds.iothub.service.impl.MysqlConfigServiceImpl;
-import com.alibaba.druid.DbType;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.alibaba.druid.pool.DruidPooledConnection;
@@ -13,14 +11,10 @@ import com.alibaba.druid.util.JdbcUtils;
 import com.alibaba.druid.util.MySqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.jdbc.datasource.embedded.DataSourceFactory;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class DruidPoolUtils {
     private final Map<String, DruidDataSource> druidPools = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private MysqlDataSourceCallback mysqlDataSourceCallback;
+    private DataBaseSourceCallback dataBaseSourceCallback;
 
     @Value("${spring.datasource.druid.filters:stat,slf4j,config}")
     private String druidFilters;
@@ -118,7 +112,7 @@ public class DruidPoolUtils {
                     druidPools.put(url + username, druidDataSource);
                 }
             } catch (Exception e) {
-                this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,false);
+                this.dataBaseSourceCallback.connectionDone(host,port,dbName,username,false);
                 throw new RuntimeException(e);
             } finally {
                 lock.writeLock().unlock();
@@ -131,10 +125,10 @@ public class DruidPoolUtils {
         lock.readLock().lock();
         try {
             connection = druidPools.get(url + username).getConnection();
-            this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,true);
+            this.dataBaseSourceCallback.connectionDone(host,port,dbName,username,true);
             log.debug("当前{}连接数 {}",url, druidPools.get(url + username).getActiveCount());
         } catch (SQLException throwables) {
-            this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,false);
+            this.dataBaseSourceCallback.connectionDone(host,port,dbName,username,false);
             throw new RuntimeException(throwables);
         } finally {
             lock.readLock().unlock();
@@ -149,7 +143,7 @@ public class DruidPoolUtils {
         DruidDataSource dataSource = druidPools.get(url + username);
         if(dataSource!=null){
             druidPools.remove(url + username).close();
-            this.mysqlDataSourceCallback.connectionDone(host,port,dbName,username,false);
+            this.dataBaseSourceCallback.connectionDone(host,port,dbName,username,false);
         }
         return true;
     }
@@ -157,29 +151,26 @@ public class DruidPoolUtils {
     public boolean testConnection(String dbType, String host, Integer port, String dbName, String username, String password) {
 
         try {
-            Future<Connection> connectionFuture = Executors.newSingleThreadExecutor().submit(new Callable<Connection>() {
-                @Override
-                public Connection call() throws Exception {
-                    Connection connection = null;
-                    // 注册 JDBC 驱动
-                    try {
-                        String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),"",null,null,null);
-                        Class.forName(DataBaseTypeEnum.getDriverNameByName(dbType));
-                        connection = DriverManager.getConnection(url,username,password);
-                        return connection;
-                    } catch (ClassNotFoundException | SQLException e) {
-                        e.printStackTrace();
-                    }finally {
-                        if(connection!=null) {
-                            try {
-                                connection.close();
-                            } catch (SQLException e) {
-                                e.printStackTrace();
-                            }
+            Future<Connection> connectionFuture = Executors.newSingleThreadExecutor().submit(() -> {
+                Connection connection = null;
+                // 注册 JDBC 驱动
+                try {
+                    String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),"",null,null,null);
+                    Class.forName(DataBaseTypeEnum.getDriverNameByName(dbType));
+                    connection = DriverManager.getConnection(url,username,password);
+                    return connection;
+                } catch (ClassNotFoundException | SQLException e) {
+                    e.printStackTrace();
+                }finally {
+                    if(connection!=null) {
+                        try {
+                            connection.close();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
                     }
-                    return null;
                 }
+                return null;
             });
             return connectionFuture.get(5, TimeUnit.SECONDS)!=null;
         } catch (Exception e) {
@@ -191,27 +182,25 @@ public class DruidPoolUtils {
 
     public List<String> showTables(String dbType, String host, Integer port, String dbName, String username, String password) throws BizException {
         try {
-            Future<List<String>> connectionFuture = Executors.newSingleThreadExecutor().submit(new Callable<List<String>>() {
-                @Override
-                public List<String> call() throws Exception {
-                    Connection connection = null;
-                    // 注册 JDBC 驱动
-                    try {
-                        String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),dbName,null,null,null);
-                        Class.forName(DataBaseTypeEnum.getDriverNameByName(dbType));
-                        connection = DriverManager.getConnection(url,username,password);
-                        return MySqlUtils.showTables(connection);
-                    } finally {
-                        if(connection!=null) {
-                            try {
-                                connection.close();
-                            } catch (SQLException e) {
-                                e.printStackTrace();
+            Future<List<String>> connectionFuture = Executors.newSingleThreadExecutor()
+                    .submit(() -> {
+                        Connection connection = null;
+                        // 注册 JDBC 驱动
+                        try {
+                            String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),dbName,null,null,null);
+                            Class.forName(DataBaseTypeEnum.getDriverNameByName(dbType));
+                            connection = DriverManager.getConnection(url,username,password);
+                            return MySqlUtils.showTables(connection);
+                        } finally {
+                            if(connection!=null) {
+                                try {
+                                    connection.close();
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
-                    }
-                }
-            });
+                    });
             return connectionFuture.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new BizException(new ResultJson(ResultCode.SQL_CONNECTION_ERROR, e.getMessage()));
@@ -220,27 +209,25 @@ public class DruidPoolUtils {
 
     public List<String> showDatabases(String dbType, String host, Integer port, String dbName, String username, String password) throws BizException {
         try {
-            Future<List<String>> connectionFuture = Executors.newSingleThreadExecutor().submit(new Callable<List<String>>() {
-                @Override
-                public List<String> call() throws Exception {
-                    Connection connection = null;
-                    // 注册 JDBC 驱动
-                    try {
-                        String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),dbName,null,null,null);
-                        Class.forName(DataBaseTypeEnum.getDriverNameByName(dbType));
-                        connection = DriverManager.getConnection(url,username,password);
-                        return showDatabases(connection);
-                    } finally {
-                        if(connection!=null) {
-                            try {
-                                connection.close();
-                            } catch (SQLException e) {
-                                e.printStackTrace();
+            Future<List<String>> connectionFuture = Executors.newSingleThreadExecutor()
+                    .submit(() -> {
+                        Connection connection = null;
+                        // 注册 JDBC 驱动
+                        try {
+                            String url = DataBaseTypeEnum.getUrlByName(dbType,host,port.toString(),dbName,null,null,null);
+                            Class.forName(DataBaseTypeEnum.getDriverNameByName(dbType));
+                            connection = DriverManager.getConnection(url,username,password);
+                            return showDatabases(connection);
+                        } finally {
+                            if(connection!=null) {
+                                try {
+                                    connection.close();
+                                } catch (SQLException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
-                    }
-                }
-            });
+                    });
             return connectionFuture.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new BizException(new ResultJson(ResultCode.SQL_CONNECTION_ERROR, e.getMessage()));
@@ -341,7 +328,7 @@ public class DruidPoolUtils {
         }
     }
 
-    public void setMysqlCallback(MysqlDataSourceCallback mysqlDataSourceCallback) {
-        this.mysqlDataSourceCallback = mysqlDataSourceCallback;
+    public void setDataBaseCallback(DataBaseSourceCallback dataBaseSourceCallback) {
+        this.dataBaseSourceCallback = dataBaseSourceCallback;
     }
 }

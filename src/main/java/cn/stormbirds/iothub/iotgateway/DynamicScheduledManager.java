@@ -12,6 +12,7 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
@@ -24,13 +25,18 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class DynamicScheduledManager implements SchedulingConfigurer {
+public class DynamicScheduledManager {
 
     private static List<IotItem> initCronList ;
     @Resource
     private IIotItemService iotItemService;
     @Resource
     private IIotgatewayService iotgatewayService;
+
+    @PostConstruct
+    public void initTask(){
+        iotItemService.list(Wrappers.<IotItem>lambdaQuery().eq(IotItem::getEnable,true));
+    }
 
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {

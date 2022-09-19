@@ -4,6 +4,7 @@ import cn.stormbirds.iothub.base.ResultJson;
 import cn.stormbirds.iothub.entity.Device;
 import cn.stormbirds.iothub.service.IDeviceService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,7 +44,7 @@ public class DeviceController {
         QueryWrapper<Device> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(device.getId()!=null,"id",device.getId());
         queryWrapper.like(StringUtils.hasText(device.getDeviceName()),"device_name",device.getDeviceName());
-        queryWrapper.like(StringUtils.hasText(device.getModel()),"model",device.getModel());
+        queryWrapper.like(!ObjectUtils.isEmpty(device.getModel()),"model",device.getModel());
         queryWrapper.like(StringUtils.hasText(device.getDesc()),"desc",device.getDesc());
         return ResultJson.ok(deviceService.list(queryWrapper));
     }
